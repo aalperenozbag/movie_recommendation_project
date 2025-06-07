@@ -1,0 +1,104 @@
+<!-- templates/watch_history.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Watch History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-image: url('/static/pictures/mrs.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 20px;
+            border-radius: 10px;
+            width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .container h1 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+        }
+        .history-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            text-align: left;
+        }
+        .history-item img {
+            width: 50px;
+            height: auto;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+        .history-item p {
+            margin: 0;
+        }
+        .history-details {
+            flex: 1;
+        }
+        .stars {
+            color: #ff0;
+            font-size: 16px;
+        }
+        .comment {
+            font-style: italic;
+            color: #555;
+            margin-top: 5px;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Watch History</h1>
+        {% if history %}
+            <div>
+                {% for item in history %}
+                    <div class="history-item">
+                        {% if item.poster_url %}
+                            <img src="{{ item.poster_url }}" alt="{{ item.title }} poster">
+                        {% else %}
+                            <img src="https://via.placeholder.com/50" alt="No poster">
+                        {% endif %}
+                        <div class="history-details">
+                            <p><strong>{{ item.title }}</strong></p>
+                            {% if item.rating %}
+                                <p class="stars">
+                                    {% for i in range(item.rating|int) %}
+                                        ★
+                                    {% endfor %}
+                                    {% for i in range(5 - item.rating|int) %}
+                                        ☆
+                                    {% endfor %}
+                                </p>
+                            {% endif %}
+                            {% if item.comment %}
+                                <p class="comment">"{{ item.comment }}"</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No watch history found.</p>
+        {% endif %}
+        <a href="{{ url_for('recommend_page') }}">Search Movies</a>
+    </div>
+</body>
+</html>
