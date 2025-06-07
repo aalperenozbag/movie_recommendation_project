@@ -1,0 +1,217 @@
+<!-- templates/movie_recommender.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movie Recommendations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-image: url('/static/pictures/mrs.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        .error { color: red; }
+        .message { color: green; }
+        .container {
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 20px;
+            border-radius: 10px;
+            width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .container h1 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+        }
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+        .search-input {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        .movie-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            position: absolute;
+            background: white;
+            width: 100%;
+            display: none;
+            z-index: 1000;
+        }
+        .movie-list div {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .movie-list div:hover {
+            background-color: #f0f0f0;
+        }
+        .movie-list div.selected {
+            background-color: #e0e0e0;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .links {
+            margin-bottom: 20px;
+        }
+        .links a {
+            color: #007bff;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+        .recommendation-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            text-align: left;
+        }
+        .recommendation-item img {
+            width: 50px;
+            height: auto;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+        .recommendation-item p {
+            margin: 0;
+        }
+        .star-rating {
+            display: inline-block;
+            font-size: 20px;
+            margin: 10px 0;
+        }
+        .star-rating input {
+            display: none;
+        }
+        .star-rating label {
+            color: #ccc;
+            cursor: pointer;
+            display: inline-block;
+            margin: 0 2px;
+        }
+        .star-rating label:before {
+            content: '\2605';
+        }
+        .star-rating input:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #ff0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome, {{ session['username'] }}</h1>
+        <div class="links">
+            <a href="{{ url_for('history') }}">Watch History</a> |
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+        <form method="POST">
+            <div class="search-container">
+                <input type="text" class="search-input" name="movie" placeholder="Search for a movie..." autocomplete="off" value="{{ selected_movie if selected_movie else '' }}">
+                <div class="movie-list" id="movieList">
+                    {% for movie in movies %}
+                        <div data-value="{{ movie }}">{{ movie }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="star-rating">
+                <input type="radio" id="star5" name="rating" value="5"><label for="star5"></label>
+                <input type="radio" id="star4" name="rating" value="4"><label for="star4"></label>
+                <input type="radio" id="star3" name="rating" value="3"><label for="star3"></label>
+                <input type="radio" id="star2" name="rating" value="2"><label for="star2"></label>
+                <input type="radio" id="star1" name="rating" value="1"><label for="star1"></label>
+            </div>
+            <textarea name="comment" placeholder="Write your review here..." rows="4"></textarea>
+            <button type="submit">Update Recommendations</button>
+        </form>
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% elif message %}
+            <p class="message">{{ message }}</p>
+        {% endif %}
+        {% if recommendations %}
+            <h2>Recommendations Based on Your Watch History</h2>
+            <div>
+                {% for rec in recommendations %}
+                    <div class="recommendation-item">
+                        {% if rec.poster_url %}
+                            <img src="{{ rec.poster_url }}" alt="{{ rec.title }} poster">
+                        {% else %}
+                            <img src="https://via.placeholder.com/50" alt="No poster">
+                        {% endif %}
+                        <p>{{ rec.title }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    <script>
+        const searchInput = document.querySelector('.search-input');
+        const movieList = document.getElementById('movieList');
+        const movieItems = movieList.querySelectorAll('div');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            movieList.style.display = query ? 'block' : 'none';
+            movieItems.forEach(item => {
+                const movieName = item.dataset.value.toLowerCase();
+                if (movieName.includes(query)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        movieItems.forEach(item => {
+            item.addEventListener('click', function() {
+                searchInput.value = this.dataset.value;
+                movieList.style.display = 'none';
+                movieItems.forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !movieList.contains(e.target)) {
+                movieList.style.display = 'none';
+            }
+        });
+
+        searchInput.addEventListener('focus', function() {
+            if (this.value) {
+                movieList.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
